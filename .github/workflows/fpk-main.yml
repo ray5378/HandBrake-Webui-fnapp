@@ -1,23 +1,17 @@
-name: Release Workflow (Build fpk with Docker Image)
+name: Build fpk for Main Branch
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number (e.g. 1.0.1)'
-        required: true
-        default: '1.0.1'
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
-  build-fpk:
+  build-fpk-main:
     runs-on: ubuntu-latest
-    name: Build fpk with Docker Image
+    name: Build fpk (with Docker Image) for Main
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,14 +26,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Determine version
+      - name: Determine version (timestamp)
         id: version
         run: |
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            VERSION=${{ github.event.inputs.version }}
-          fi
+          # 使用日期 + git short sha 作为版本
+          VERSION="$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building fpk version: $VERSION"
 
@@ -96,47 +87,34 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: fpk-build
+          name: fpk-main-build
           path: |
             dist/
-          retention-days: 30
+          retention-days: 7
 
-  release:
-    runs-on: ubuntu-latest
-    name: Create Release
-    needs: build-fpk
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Delete old pre-release
+        uses: dev-drprasad/delete-tag-and-release@v1
         with:
-          fetch-depth: 0
+          tag_name: main-latest
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: fpk-build
-          path: dist/
-
-      - name: Determine version
-        id: version
-        run: |
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            VERSION=${{ github.event.inputs.version }}
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create Release
+      - name: Create Pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          tag_name: main-latest
+          name: Main Branch Pre-release
+          prerelease: true
           files: |
             dist/App.ThirdParty.HandBrakeWebui-${{ steps.version.outputs.version }}.fpk
             dist/App.ThirdParty.HandBrakeWebui-${{ steps.version.outputs.version }}.fpk.sha256
             docker-compose.yml
             .env.example
+          body: |
+            这是 main 分支的最新自动构建版本。
+            This is an auto-built pre-release from the main branch.
+            Built from commit: ${{ github.sha }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
