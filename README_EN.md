@@ -24,7 +24,7 @@ Web-based video transcoding management interface powered by HandBrake
 ```yaml
 services:
   handbrake-webui:
-    image: ray5378/handbrake-webui:latest
+    image: ray5378/handbrake-webui-fnapp:latest
     container_name: handbrake-webui
     ports:
       - 52389:52389
@@ -80,7 +80,7 @@ On first use, go to **Settings → Cache Directory** and use the file browser to
 
 ```bash
 # Pull the image
-docker pull ray5378/handbrake-webui:latest
+docker pull ray5378/handbrake-webui-fnapp:latest
 
 # Start the container
 docker run -d \
@@ -89,7 +89,7 @@ docker run -d \
   -v $(pwd)/config:/config \
   -v $(pwd)/drive:/drive \
   --restart unless-stopped \
-  ray5378/handbrake-webui:latest
+  ray5378/handbrake-webui-fnapp:latest
 ```
 
 ---

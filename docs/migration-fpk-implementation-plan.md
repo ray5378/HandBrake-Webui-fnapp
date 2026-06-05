@@ -176,7 +176,7 @@ set -e
 # ---- 应用信息 ----
 APP_NAME="App.ThirdParty.HandBrakeWebui"
 CONTAINER_NAME="handbrake-webui"
-IMAGE_NAME="ray5378/handbrake-webui:latest"
+IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
 INTERNAL_PORT="52389"
 
 # ---- 路径解析 ----

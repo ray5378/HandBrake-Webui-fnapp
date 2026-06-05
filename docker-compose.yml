@@ -1,6 +1,6 @@
 services:
   handbrake-webui:
-    image: ray5378/handbrake-webui:latest
+    image: ray5378/handbrake-webui-fnapp:latest
     container_name: handbrake-webui
     ports:
       - 52389:52389

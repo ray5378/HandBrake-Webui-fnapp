@@ -24,7 +24,7 @@
 ```yaml
 services:
   handbrake-webui:
-    image: ray5378/handbrake-webui:latest
+    image: ray5378/handbrake-webui-fnapp:latest
     container_name: handbrake-webui
     ports:
       - 52389:52389
@@ -80,7 +80,7 @@ docker-compose logs -f
 
 ```bash
 # 拉取镜像
-docker pull ray5378/handbrake-webui:latest
+docker pull ray5378/handbrake-webui-fnapp:latest
 
 # 启动容器
 docker run -d \
@@ -89,7 +89,7 @@ docker run -d \
   -v $(pwd)/config:/config \
   -v $(pwd)/drive:/drive \
   --restart unless-stopped \
-  ray5378/handbrake-webui:latest
+  ray5378/handbrake-webui-fnapp:latest
 ```
 
 ---
