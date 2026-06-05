@@ -1,8 +1,30 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+const KNOWN_ROUTES = ['/login', '/files', '/jobs', '/presets', '/settings', '/account'];
+
+function detectBasePath(): string {
+  const p = window.location.pathname;
+  for (const route of KNOWN_ROUTES) {
+    const idx = p.indexOf(route);
+    if (idx > 0) {
+      return p.slice(0, idx);
+    }
+    if (idx === 0) {
+      return '/';
+    }
+  }
+  return p.replace(/\/$/, '') || '/';
+}
+
+const _basePath = detectBasePath();
+
+export function getBasePath(): string {
+  return _basePath;
+}
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: _basePath === '/' ? '/api' : _basePath + '/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -32,7 +54,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const response = await axios.post('/api/auth/refresh', {
+          const response = await axios.post(_basePath + '/api/auth/refresh', {
             refreshToken
           });
           const { token } = response.data.data;
@@ -43,13 +65,13 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch (refreshError) {
           useAuthStore.getState().logout();
-          window.location.href = '/login';
+          window.location.href = _basePath + '/login';
           return Promise.reject(refreshError);
         }
       }
 
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      window.location.href = _basePath + '/login';
     }
 
     return Promise.reject(error);

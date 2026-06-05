@@ -94,7 +94,7 @@ function Login() {
           <div className='text-center mb-8'>
             <div className='w-20 h-20 mx-auto mb-4'>
               <img
-                src='/logo.png'
+                src='logo.png'
                 alt={t('app.fullName', 'HandBrake Web UI')}
                 className='w-full h-full object-contain'
               />
@@ -174,7 +174,7 @@ function Login() {
         <div className='text-center mb-8'>
           <div className='w-20 h-20 mx-auto mb-4'>
             <img
-              src='/logo.png'
+              src='logo.png'
               alt={t('app.fullName', 'HandBrake Web UI')}
               className='w-full h-full object-contain'
             />

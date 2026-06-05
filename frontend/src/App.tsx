@@ -1,6 +1,7 @@
 import { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import { getBasePath } from './services/api';
 import Layout from './components/layout/Layout';
 import Loading from './components/common/Loading';
 
@@ -27,8 +28,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const basename = getBasePath() === '/' ? '/' : getBasePath();
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path='/login' element={<Login />} />
