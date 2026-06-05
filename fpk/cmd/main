@@ -38,14 +38,9 @@ do_install() {
         return 0
     fi
 
-    log_info "正在拉取 Docker 镜像: ${IMAGE_NAME}..."
-    docker pull "${IMAGE_NAME}" 2>&1 | tail -5
-    local pull_ret=${PIPESTATUS[0]}
-    if [ $pull_ret -ne 0 ]; then
-        log_error "镜像拉取失败 (exit: $pull_ret)"
-        return 1
-    fi
-    log_info "镜像拉取完成"
+    log_info "正在从内置镜像加载..."
+    load_docker_image || return 1
+    log_info "镜像加载完成"
 
     local data_vol
     data_vol=$(get_data_volume)
@@ -208,13 +203,9 @@ do_upgrade() {
 
     ensure_docker || return 1
 
-    log_info "正在拉取最新镜像: ${IMAGE_NAME}..."
-    docker pull "${IMAGE_NAME}" 2>&1 | tail -5
-    local pull_ret=${PIPESTATUS[0]}
-    if [ $pull_ret -ne 0 ]; then
-        log_error "镜像拉取失败 (exit: $pull_ret)"
-        return 1
-    fi
+    log_info "正在从内置镜像加载新版本..."
+    load_docker_image || return 1
+    log_info "镜像加载完成"
 
     if ! container_exists; then
         log_info "容器不存在，直接安装新版本..."

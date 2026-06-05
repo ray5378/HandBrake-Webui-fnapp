@@ -31,15 +31,13 @@ if docker ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME}"; then
     log_warn "发现同名容器 ${CONTAINER_NAME}，将在安装时复用"
 fi
 
-# 4. 拉取 Docker 镜像
-log_info "正在拉取 Docker 镜像: ${IMAGE_NAME}..."
-PULL_OUTPUT=$(docker pull "${IMAGE_NAME}" 2>&1) || {
-    log_error "镜像拉取失败"
-    echo "$PULL_OUTPUT" | tail -5
+# 4. 加载内置 Docker 镜像
+log_info "正在从 fpk 包加载 Docker 镜像..."
+load_docker_image || {
+    log_error "镜像加载失败，fpk 包可能已损坏"
     exit 1
 }
-echo "$PULL_OUTPUT" | tail -5
-log_info "镜像拉取完成"
+log_info "镜像加载完成"
 
 log_info "环境检查通过"
 exit 0

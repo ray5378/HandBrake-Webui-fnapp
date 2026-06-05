@@ -1,0 +1,2 @@
+# 构建时自动生成的 Docker 镜像导出文件（由 build-fpk.sh 生成后自动清理）
+docker/

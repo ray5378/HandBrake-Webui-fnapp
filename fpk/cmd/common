@@ -10,6 +10,7 @@ set -e
 APP_NAME="App.ThirdParty.HandBrakeWebui"
 CONTAINER_NAME="handbrake-webui"
 IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
+IMAGE_TAR_RELATIVE="docker/image.tar.gz"
 INTERNAL_PORT="52389"
 
 # ---- 路径解析 ----
@@ -65,6 +66,41 @@ ensure_docker() {
         return 1
     fi
     log_info "Docker 就绪"
+    return 0
+}
+
+# 从 fpk 包内加载 Docker 镜像（从本地 tar.gz 恢复）
+load_docker_image() {
+    # 镜像 tar 在 fpk 安装后的路径
+    local tar_path="${APP_ROOT}/${IMAGE_TAR_RELATIVE}"
+
+    # 备选路径（针对不同 fnOS 版本）
+    if [ ! -f "$tar_path" ]; then
+        tar_path="$(dirname "${SCRIPT_DIR}")/../${IMAGE_TAR_RELATIVE}"
+    fi
+
+    if [ ! -f "$tar_path" ]; then
+        log_error "未找到内置 Docker 镜像文件: ${IMAGE_TAR_RELATIVE}"
+        log_error "fpk 包可能不完整，请重新下载安装"
+        return 1
+    fi
+
+    log_info "正在从内置镜像加载: ${tar_path}"
+
+    # 检查镜像是否已存在
+    if docker image inspect "${IMAGE_NAME}" &>/dev/null; then
+        log_info "镜像 ${IMAGE_NAME} 已存在，跳过加载"
+        return 0
+    fi
+
+    local load_output
+    load_output=$(gunzip -c "${tar_path}" | docker load 2>&1) || {
+        log_error "镜像加载失败"
+        echo "$load_output" | tail -5
+        return 1
+    fi
+    echo "$load_output" | tail -3
+    log_info "镜像加载完成"
     return 0
 }
 
