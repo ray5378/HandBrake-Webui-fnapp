@@ -70,7 +70,10 @@ jobs:
 
       - name: Build fpk
         run: |
-          FPK_NAME="App.ThirdParty.HandBrakeWebui-1.0.3.fpk"
+          VERSION=$(grep '^version' fpk/manifest | awk -F'=' '{print $2}' | xargs)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
+          echo "Building ${FPK_NAME}"
           tar -czf "${FPK_NAME}" \
             --transform 's|^fpk/||' \
             fpk/app.tgz \
@@ -99,7 +102,7 @@ jobs:
 
       - name: Generate checksum
         run: |
-          sha256sum App.ThirdParty.HandBrakeWebui-*.fpk | tee App.ThirdParty.HandBrakeWebui-1.0.3.fpk.sha256
+          sha256sum "App.ThirdParty.HandBrakeWebui-${VERSION}.fpk" | tee "App.ThirdParty.HandBrakeWebui-${VERSION}.fpk.sha256"
 
       - name: Upload fpk artifact
         uses: actions/upload-artifact@v4
