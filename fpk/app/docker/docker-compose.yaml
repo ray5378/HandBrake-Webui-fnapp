@@ -1,0 +1,14 @@
+services:
+  handbrake-webui:
+    image: ray5378/handbrake-webui-fnapp:latest
+    container_name: handbrake-webui
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${TRIM_PKGVAR}/config:/config
+    environment:
+      - PORT=${TRIM_SERVICE_PORT}
+      - CONFIG_DIR=/config
+      - NODE_ENV=production
+    devices:
+      - /dev/dri:/dev/dri

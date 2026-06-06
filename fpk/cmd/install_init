@@ -1,0 +1,23 @@
+#!/bin/bash
+
+IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
+
+# Locate the bundled Docker image tarball
+# TRIM_TEMP_TPKFILE points to the fpk extraction directory
+if [ -n "${TRIM_TEMP_TPKFILE}" ] && [ -f "${TRIM_TEMP_TPKFILE}/docker/image.tar.gz" ]; then
+  TAR_PATH="${TRIM_TEMP_TPKFILE}/docker/image.tar.gz"
+elif [ -n "${TRIM_APPDEST}" ] && [ -f "${TRIM_APPDEST}/../docker/image.tar.gz" ]; then
+  TAR_PATH="${TRIM_APPDEST}/../docker/image.tar.gz"
+else
+  echo "Image tarball not found, will pull from registry on first start" >&2
+  exit 0
+fi
+
+if docker image inspect "${IMAGE_NAME}" &>/dev/null; then
+  exit 0
+fi
+
+gunzip -c "${TAR_PATH}" | docker load
+docker tag handbrake-webui:latest "${IMAGE_NAME}" 2>/dev/null || true
+
+exit 0

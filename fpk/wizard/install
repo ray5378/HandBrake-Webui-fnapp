@@ -1,0 +1,15 @@
+[
+  {
+    "stepTitle": "安装向导",
+    "items": [
+      {
+        "type": "tips",
+        "helpText": "HandBrake 转码 是一个基于 Web 界面的视频转码管理工具。"
+      },
+      {
+        "type": "tips",
+        "helpText": "支持 Intel QSV / VA-API 硬件加速，可实现高效视频转码。"
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+[ "${wizard_data_action:-}" == "delete" ] && {
+  rm -rf "${TRIM_PKGVAR}"
+}
+
+exit 0

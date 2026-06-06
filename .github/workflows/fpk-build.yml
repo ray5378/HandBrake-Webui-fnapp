@@ -1,0 +1,109 @@
+name: Build fpk Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build fpk
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend && npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend && VITE_GIT_COMMIT=${GITHUB_SHA::7} npm run build
+
+      - name: Install backend dependencies
+        run: |
+          cd backend && npm ci --ignore-scripts
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          tags: ray5378/handbrake-webui-fnapp:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Save Docker image as tarball
+        run: |
+          mkdir -p fpk/docker
+          docker tag handbrake-webui-fnapp:latest ray5378/handbrake-webui-fnapp:latest 2>/dev/null || true
+          docker save ray5378/handbrake-webui-fnapp:latest | gzip > fpk/docker/image.tar.gz
+
+      - name: Package app.tgz
+        run: |
+          tar -czf fpk/app.tgz -C fpk/app .
+
+      - name: Build fpk
+        run: |
+          FPK_NAME="App.ThirdParty.HandBrakeWebui-1.0.3.fpk"
+          tar -czf "${FPK_NAME}" \
+            --transform 's|^fpk/||' \
+            fpk/app.tgz \
+            fpk/manifest \
+            fpk/ICON.PNG \
+            fpk/ICON_256.PNG \
+            fpk/docker/image.tar.gz \
+            fpk/cmd/main \
+            fpk/cmd/install_init \
+            fpk/cmd/install_callback \
+            fpk/cmd/uninstall_init \
+            fpk/cmd/uninstall_callback \
+            fpk/cmd/upgrade_init \
+            fpk/cmd/upgrade_callback \
+            fpk/cmd/config_init \
+            fpk/cmd/config_callback \
+            fpk/config/privilege \
+            fpk/config/resource \
+            fpk/wizard/install \
+            fpk/wizard/uninstall
+
+      - name: Generate checksum
+        run: |
+          sha256sum App.ThirdParty.HandBrakeWebui-*.fpk | tee App.ThirdParty.HandBrakeWebui-1.0.3.fpk.sha256
+
+      - name: Upload fpk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: handbrake-webui-fpk
+          path: |
+            App.ThirdParty.HandBrakeWebui-*.fpk
+            App.ThirdParty.HandBrakeWebui-*.fpk.sha256
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            App.ThirdParty.HandBrakeWebui-*.fpk
+            App.ThirdParty.HandBrakeWebui-*.fpk.sha256
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

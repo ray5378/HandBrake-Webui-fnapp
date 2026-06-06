@@ -1,0 +1,16 @@
+appname               = App.ThirdParty.HandBrakeWebui
+version               = 1.0.3
+display_name          = HandBrake 转码
+desc                  = 基于 Web 界面的 HandBrake 视频转码管理工具，支持队列管理、预设管理和 Intel QSV / VA-API 硬件加速。基于 HandBrake CLI + FFmpeg 实现高效视频转码。
+platform              = all
+source                = thirdparty
+maintainer            = ray5378
+maintainer_url        = https://github.com/ray5378/HandBrake-Webui
+distributor           = ray5378
+distributor_url       = https://github.com/ray5378/HandBrake-Webui
+os_min_version        = 0.9.27
+ctl_stop              = true
+desktop_uidir         = ui
+desktop_applaunchname = App.ThirdParty.HandBrakeWebui.Web
+service_port          = 52389
+checkport             = false
