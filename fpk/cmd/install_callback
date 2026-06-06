@@ -1,3 +1,43 @@
 #!/bin/bash
 
+COMPOSE_FILE="${TRIM_APPDEST}/docker/docker-compose.yaml"
+
+inject_authorized_volumes() {
+  [ ! -f "$COMPOSE_FILE" ] && return
+
+  local paths=""
+  if [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
+    paths="${TRIM_DATA_SHARE_PATHS}"
+  fi
+
+  if [ -z "${paths}" ]; then
+    for f in "${TRIM_PKGVAR}/share_paths" \
+             "${TRIM_PKGETC}/share_paths" \
+             "${TRIM_PKGHOME}/.share_paths"; do
+      if [ -f "$f" ]; then
+        paths=$(tr -d '"' < "$f")
+        break
+      fi
+    done
+  fi
+
+  sed -i '\|^      - .*:/drive/|d' "$COMPOSE_FILE" 2>/dev/null || true
+  [ -z "${paths}" ] && return
+
+  local insert=""
+  for p in $paths; do
+    p=$(echo "$p" | tr -d '"')
+    local name
+    name=$(basename "$p")
+    [ -z "$name" ] && continue
+    insert="${insert}      - ${p}:/drive/${name}\n"
+  done
+  [ -z "${insert}" ] && return
+  insert=${insert%\\n}
+
+  sed -i "/^    devices:/i\\${insert}" "$COMPOSE_FILE"
+}
+
+inject_authorized_volumes
+
 exit 0

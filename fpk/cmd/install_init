@@ -1,23 +1,75 @@
 #!/bin/bash
 
 IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
+COMPOSE_FILE="${TRIM_APPDEST}/docker/docker-compose.yaml"
 
-# Locate the bundled Docker image tarball
-# TRIM_TEMP_TPKFILE points to the fpk extraction directory
-if [ -n "${TRIM_TEMP_TPKFILE}" ] && [ -f "${TRIM_TEMP_TPKFILE}/docker/image.tar.gz" ]; then
-  TAR_PATH="${TRIM_TEMP_TPKFILE}/docker/image.tar.gz"
-elif [ -n "${TRIM_APPDEST}" ] && [ -f "${TRIM_APPDEST}/../docker/image.tar.gz" ]; then
-  TAR_PATH="${TRIM_APPDEST}/../docker/image.tar.gz"
-else
-  echo "Image tarball not found, will pull from registry on first start" >&2
-  exit 0
-fi
+# ── Load Docker image ──────────────────────────────────────────────
 
-if docker image inspect "${IMAGE_NAME}" &>/dev/null; then
-  exit 0
-fi
+load_docker_image() {
+  local tar_path=""
+  if [ -n "${TRIM_TEMP_TPKFILE}" ] && [ -f "${TRIM_TEMP_TPKFILE}/docker/image.tar.gz" ]; then
+    tar_path="${TRIM_TEMP_TPKFILE}/docker/image.tar.gz"
+  elif [ -n "${TRIM_APPDEST}" ] && [ -f "${TRIM_APPDEST}/../docker/image.tar.gz" ]; then
+    tar_path="${TRIM_APPDEST}/../docker/image.tar.gz"
+  else
+    echo "Image tarball not found, will pull from registry on first start" >&2
+    return 1
+  fi
 
-gunzip -c "${TAR_PATH}" | docker load
-docker tag handbrake-webui:latest "${IMAGE_NAME}" 2>/dev/null || true
+  if docker image inspect "${IMAGE_NAME}" &>/dev/null; then
+    return 0
+  fi
+
+  gunzip -c "${tar_path}" | docker load
+  docker tag handbrake-webui:latest "${IMAGE_NAME}" 2>/dev/null || true
+  return 0
+}
+
+# ── Inject user-authorized folder volumes ─────────────────────────
+
+inject_authorized_volumes() {
+  [ ! -f "$COMPOSE_FILE" ] && return
+
+  # Collect authorized folder paths
+  local paths=""
+  if [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
+    paths="${TRIM_DATA_SHARE_PATHS}"
+  fi
+
+  if [ -z "${paths}" ]; then
+    for f in "${TRIM_PKGVAR}/share_paths" \
+             "${TRIM_PKGETC}/share_paths" \
+             "${TRIM_PKGHOME}/.share_paths"; do
+      if [ -f "$f" ]; then
+        paths=$(tr -d '"' < "$f")
+        break
+      fi
+    done
+  fi
+
+  # Remove existing authorized-drive entries
+  sed -i '\|^      - .*:/drive/|d' "$COMPOSE_FILE" 2>/dev/null || true
+
+  [ -z "${paths}" ] && return
+
+  # Insert each authorized path as a volume entry before "devices:"
+  local insert=""
+  for p in $paths; do
+    p=$(echo "$p" | tr -d '"')
+    local name
+    name=$(basename "$p")
+    [ -z "$name" ] && continue
+    insert="${insert}      - ${p}:/drive/${name}\n"
+  done
+  [ -z "${insert}" ] && return
+  insert=${insert%\\n}
+
+  sed -i "/^    devices:/i\\${insert}" "$COMPOSE_FILE"
+}
+
+# ── Main ───────────────────────────────────────────────────────────
+
+load_docker_image
+inject_authorized_volumes
 
 exit 0
