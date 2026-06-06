@@ -1,14 +1,21 @@
 [
   {
-    "stepTitle": "安装向导",
+    "stepTitle": "安装 HandBrake 转码",
     "items": [
       {
         "type": "tips",
-        "helpText": "HandBrake 转码 是一个基于 Web 界面的视频转码管理工具。"
+        "helpText": "HandBrake 转码 是一个基于 Web 界面的视频转码管理工具，支持 Intel QSV / VA-API 硬件加速。"
+      },
+      {
+        "type": "text",
+        "field": "drive_path",
+        "label": "媒体目录路径",
+        "initValue": "",
+        "rules": []
       },
       {
         "type": "tips",
-        "helpText": "支持 Intel QSV / VA-API 硬件加速，可实现高效视频转码。"
+        "helpText": "输入要挂载到容器内的目录路径（如 /vol1/1000/Video），该目录将在容器内映射为 /drive/<目录名>。可在应用设置中后续修改。"
       }
     ]
   }

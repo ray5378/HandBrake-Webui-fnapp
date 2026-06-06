@@ -2,19 +2,39 @@
 
 IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
 
-# Locate docker-compose.yaml (fnOS deploys to target/docker/ relative to app root)
-COMPOSE_FILE=""
-for candidate in \
-  "${TRIM_APPDEST}/target/docker/docker-compose.yaml" \
-  "${TRIM_APPDEST}/docker/docker-compose.yaml"; do
-  if [ -f "$candidate" ]; then
-    COMPOSE_FILE="$candidate"
-    break
-  fi
-done
-[ -z "$COMPOSE_FILE" ] && echo "docker-compose.yaml not found, volumes will not be injected" >&2
+find_compose_file() {
+  for c in "${TRIM_APPDEST}/docker/docker-compose.yaml" \
+           "${TRIM_APPDEST}/target/docker/docker-compose.yaml"; do
+    if [ -f "$c" ]; then
+      echo "$c"
+      return 0
+    fi
+  done
+  return 1
+}
 
-# ── Load Docker image ──────────────────────────────────────────────
+inject_drive_volume() {
+  local compose_file="$1"
+  local path="$2"
+  [ ! -f "$compose_file" ] && return 1
+
+  # Save path for upgrade persistence
+  if [ -n "$path" ]; then
+    mkdir -p "${TRIM_PKGVAR}" 2>/dev/null || true
+    echo "$path" > "${TRIM_PKGVAR}/drive_path" 2>/dev/null || true
+  fi
+
+  # Remove existing /drive/ volumes
+  sed -i '\|^      - .*:/drive|d' "$compose_file" 2>/dev/null || true
+
+  [ -z "$path" ] && return 0
+
+  local name
+  name=$(basename "$path" | tr -d '"')
+  [ -z "$name" ] && return 0
+
+  sed -i "/^    volumes:/a\\      - ${path}:/drive/${name}" "$compose_file"
+}
 
 load_docker_image() {
   local tar_path=""
@@ -36,51 +56,22 @@ load_docker_image() {
   return 0
 }
 
-# ── Inject user-authorized folder volumes ─────────────────────────
-
-inject_authorized_volumes() {
-  [ ! -f "$COMPOSE_FILE" ] && return
-
-  # Collect authorized folder paths
-  local paths=""
-  if [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
-    paths="${TRIM_DATA_SHARE_PATHS}"
-  fi
-
-  if [ -z "${paths}" ]; then
-    for f in "${TRIM_PKGVAR}/share_paths" \
-             "${TRIM_PKGETC}/share_paths" \
-             "${TRIM_PKGHOME}/.share_paths"; do
-      if [ -f "$f" ]; then
-        paths=$(tr -d '"' < "$f")
-        break
-      fi
-    done
-  fi
-
-  # Remove existing authorized-drive entries
-  sed -i '\|^      - .*:/drive/|d' "$COMPOSE_FILE" 2>/dev/null || true
-
-  [ -z "${paths}" ] && return
-
-  # Insert each authorized path as a volume entry before "devices:"
-  local insert=""
-  for p in $paths; do
-    p=$(echo "$p" | tr -d '"')
-    local name
-    name=$(basename "$p")
-    [ -z "$name" ] && continue
-    insert="${insert}      - ${p}:/drive/${name}\n"
-  done
-  [ -z "${insert}" ] && return
-  insert=${insert%\\n}
-
-  sed -i "/^    volumes:/a\\${insert}" "$COMPOSE_FILE"
-}
-
-# ── Main ───────────────────────────────────────────────────────────
-
+# Main
 load_docker_image
-inject_authorized_volumes
+
+COMPOSE_FILE=$(find_compose_file)
+if [ -z "$COMPOSE_FILE" ]; then
+  echo "docker-compose.yaml not found, volumes will not be injected" >&2
+else
+  # Use wizard-provided drive_path, fall back to file, fall back to TRIM_DATA_SHARE_PATHS
+  local_path="${drive_path}"
+  if [ -z "$local_path" ] && [ -f "${TRIM_PKGVAR}/drive_path" ]; then
+    local_path=$(cat "${TRIM_PKGVAR}/drive_path")
+  fi
+  if [ -z "$local_path" ] && [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
+    local_path="${TRIM_DATA_SHARE_PATHS%%:*}"
+  fi
+  inject_drive_volume "$COMPOSE_FILE" "$local_path"
+fi
 
 exit 0

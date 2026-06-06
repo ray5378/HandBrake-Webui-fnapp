@@ -93,6 +93,7 @@ jobs:
             fpk/config/privilege \
             fpk/config/resource \
             fpk/wizard/install \
+            fpk/wizard/config \
             fpk/wizard/uninstall
 
       - name: Verify fpk contents

@@ -1,59 +1,57 @@
 #!/bin/bash
 
-# Locate docker-compose.yaml (fnOS deploys to target/docker/ relative to app root)
-COMPOSE_FILE=""
-for candidate in \
-  "${TRIM_APPDEST}/target/docker/docker-compose.yaml" \
-  "${TRIM_APPDEST}/docker/docker-compose.yaml"; do
-  if [ -f "$candidate" ]; then
-    COMPOSE_FILE="$candidate"
-    break
-  fi
-done
-[ -z "$COMPOSE_FILE" ] && echo "docker-compose.yaml not found, volumes will not be injected" >&2
-
-inject_authorized_volumes() {
-  [ ! -f "$COMPOSE_FILE" ] && return
-
-  local paths=""
-  if [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
-    paths="${TRIM_DATA_SHARE_PATHS}"
-  fi
-
-  if [ -z "${paths}" ]; then
-    for f in "${TRIM_PKGVAR}/share_paths" \
-             "${TRIM_PKGETC}/share_paths" \
-             "${TRIM_PKGHOME}/.share_paths"; do
-      if [ -f "$f" ]; then
-        paths=$(tr -d '"' < "$f")
-        break
-      fi
-    done
-  fi
-
-  sed -i '\|^      - .*:/drive/|d' "$COMPOSE_FILE" 2>/dev/null || true
-  [ -z "${paths}" ] && return
-
-  local insert=""
-  for p in $paths; do
-    p=$(echo "$p" | tr -d '"')
-    local name
-    name=$(basename "$p")
-    [ -z "$name" ] && continue
-    insert="${insert}      - ${p}:/drive/${name}\n"
+find_compose_file() {
+  for c in "${TRIM_APPDEST}/docker/docker-compose.yaml" \
+           "${TRIM_APPDEST}/target/docker/docker-compose.yaml"; do
+    if [ -f "$c" ]; then
+      echo "$c"
+      return 0
+    fi
   done
-  [ -z "${insert}" ] && return
-  insert=${insert%\\n}
-
-  sed -i "/^    volumes:/a\\${insert}" "$COMPOSE_FILE"
+  return 1
 }
 
-inject_authorized_volumes
+inject_drive_volume() {
+  local compose_file="$1"
+  local path="$2"
+  [ ! -f "$compose_file" ] && return 1
 
-# Recreate container to pick up new volume mounts
-if command -v docker &>/dev/null && [ -n "${COMPOSE_FILE}" ]; then
-  COMPOSE_FILE=$(readlink -f "${COMPOSE_FILE}")
-  docker compose -f "${COMPOSE_FILE}" up -d --force-recreate 2>/dev/null || true
+  # Save path for upgrade persistence
+  if [ -n "$path" ]; then
+    mkdir -p "${TRIM_PKGVAR}" 2>/dev/null || true
+    echo "$path" > "${TRIM_PKGVAR}/drive_path" 2>/dev/null || true
+  fi
+
+  # Remove existing /drive/ volumes
+  sed -i '\|^      - .*:/drive|d' "$compose_file" 2>/dev/null || true
+
+  [ -z "$path" ] && return 0
+
+  local name
+  name=$(basename "$path" | tr -d '"')
+  [ -z "$name" ] && return 0
+
+  sed -i "/^    volumes:/a\\      - ${path}:/drive/${name}" "$compose_file"
+}
+
+COMPOSE_FILE=$(find_compose_file)
+if [ -z "$COMPOSE_FILE" ]; then
+  echo "docker-compose.yaml not found, volumes will not be injected" >&2
+else
+  local_path="${drive_path}"
+  if [ -z "$local_path" ] && [ -f "${TRIM_PKGVAR}/drive_path" ]; then
+    local_path=$(cat "${TRIM_PKGVAR}/drive_path")
+  fi
+  if [ -z "$local_path" ] && [ -n "${TRIM_DATA_SHARE_PATHS}" ]; then
+    local_path="${TRIM_DATA_SHARE_PATHS%%:*}"
+  fi
+  inject_drive_volume "$COMPOSE_FILE" "$local_path"
+fi
+
+# Recreate container to apply new volume mounts
+if command -v docker &>/dev/null && [ -n "$COMPOSE_FILE" ]; then
+  CF=$(readlink -f "$COMPOSE_FILE")
+  docker compose -f "$CF" up -d --force-recreate >/dev/null 2>&1 || true
 fi
 
 exit 0

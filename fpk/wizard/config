@@ -1,0 +1,18 @@
+[
+  {
+    "stepTitle": "配置 HandBrake 转码",
+    "items": [
+      {
+        "type": "text",
+        "field": "drive_path",
+        "label": "媒体目录路径",
+        "initValue": "",
+        "rules": []
+      },
+      {
+        "type": "tips",
+        "helpText": "输入要挂载到容器内的目录路径（如 /vol1/1000/Video），该目录将在容器内映射为 /drive/<目录名>。保存后容器将自动重启使新路径生效。"
+      }
+    ]
+  }
+]
