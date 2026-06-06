@@ -1,6 +1,16 @@
 #!/bin/bash
 
-COMPOSE_FILE="${TRIM_APPDEST}/docker/docker-compose.yaml"
+# Locate docker-compose.yaml (fnOS deploys to target/docker/ relative to app root)
+COMPOSE_FILE=""
+for candidate in \
+  "${TRIM_APPDEST}/target/docker/docker-compose.yaml" \
+  "${TRIM_APPDEST}/docker/docker-compose.yaml"; do
+  if [ -f "$candidate" ]; then
+    COMPOSE_FILE="$candidate"
+    break
+  fi
+done
+[ -z "$COMPOSE_FILE" ] && echo "docker-compose.yaml not found, volumes will not be injected" >&2
 
 inject_authorized_volumes() {
   [ ! -f "$COMPOSE_FILE" ] && return
@@ -35,9 +45,15 @@ inject_authorized_volumes() {
   [ -z "${insert}" ] && return
   insert=${insert%\\n}
 
-  sed -i "/^    devices:/i\\${insert}" "$COMPOSE_FILE"
+  sed -i "/^    volumes:/a\\${insert}" "$COMPOSE_FILE"
 }
 
 inject_authorized_volumes
+
+# Recreate container to pick up new volume mounts
+if command -v docker &>/dev/null && [ -n "${COMPOSE_FILE}" ]; then
+  COMPOSE_FILE=$(readlink -f "${COMPOSE_FILE}")
+  docker compose -f "${COMPOSE_FILE}" up -d --force-recreate 2>/dev/null || true
+fi
 
 exit 0
