@@ -1,7 +1,7 @@
 {
     ".url": {
         "App.ThirdParty.HandBrakeWebui.Web": {
-            "title": "HandBrake 转码",
+            "title": "HandBrake",
             "icon": "images/icon_{0}.png",
             "type": "url",
             "protocol": "http",
