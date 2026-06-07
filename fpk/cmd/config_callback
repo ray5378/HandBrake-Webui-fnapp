@@ -27,11 +27,7 @@ inject_drive_volume() {
 
   [ -z "$path" ] && return 0
 
-  local name
-  name=$(basename "$path" | tr -d '"')
-  [ -z "$name" ] && return 0
-
-  sed -i "/^    volumes:/a\\      - ${path}:/drive/${name}" "$compose_file"
+  sed -i "/^    volumes:/a\\      - ${path}:/drive" "$compose_file"
 }
 
 COMPOSE_FILE=$(find_compose_file)
