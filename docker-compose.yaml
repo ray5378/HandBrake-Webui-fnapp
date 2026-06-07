@@ -1,0 +1,12 @@
+services:
+  handbrake-webui:
+    image: ray5378/handbrake-webui-fnapp:latest
+    container_name: handbrake-webui
+    restart: unless-stopped
+    ports:
+      - 52389:52389
+    volumes:
+      - ./config:/config
+      - /path/to/your/media:/drive
+    devices:
+      - /dev/dri:/dev/dri
