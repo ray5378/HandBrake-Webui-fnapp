@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
+IMAGE_NAME="ray5378/handbrake-webui-fnapp:${TRIM_APPVER:-latest}"
 
 start_container() {
   local drive_path=""

@@ -1,0 +1,11 @@
+[
+  {
+    "stepTitle": "升级 HandBrake 转码",
+    "items": [
+      {
+        "type": "tips",
+        "helpText": "正在升级 HandBrake 转码到最新版本，您的配置和数据将被保留。"
+      }
+    ]
+  }
+]

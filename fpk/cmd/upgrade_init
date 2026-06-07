@@ -1,10 +1,10 @@
 #!/bin/bash
 
-IMAGE_NAME="ray5378/handbrake-webui-fnapp:latest"
+IMAGE_NAME="ray5378/handbrake-webui-fnapp:${TRIM_APPVER:-latest}"
 
 load_docker_image() {
   docker pull "${IMAGE_NAME}" || {
-    echo "Failed to pull image ${IMAGE_NAME}" >&2
+    echo "Failed to pull image ${IMAGE_NAME}" >> "${TRIM_TEMP_LOGFILE}"
     return 1
   }
 }

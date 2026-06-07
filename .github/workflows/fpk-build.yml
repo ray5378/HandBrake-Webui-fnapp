@@ -49,12 +49,19 @@ jobs:
         run: |
           cd src/backend && npm ci --ignore-scripts
 
+      - name: Extract version
+        run: |
+          VERSION=$(grep '^version' fpk/manifest | awk -F'=' '{print $2}' | xargs)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: src
           file: src/docker/Dockerfile
-          tags: ray5378/handbrake-webui-fnapp:latest
+          tags: |
+            ray5378/handbrake-webui-fnapp:${{ env.VERSION }}
+            ray5378/handbrake-webui-fnapp:latest
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -66,8 +73,6 @@ jobs:
 
       - name: Build fpk
         run: |
-          VERSION=$(grep '^version' fpk/manifest | awk -F'=' '{print $2}' | xargs)
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
           FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
           echo "Building ${FPK_NAME}"
           tar -czf "${FPK_NAME}" \
@@ -90,6 +95,8 @@ jobs:
             fpk/wizard/install \
             fpk/wizard/config \
             fpk/wizard/uninstall \
+            fpk/wizard/upgrade \
+            fpk/app/docker/docker-compose.yaml \
             fpk/ui/config \
             fpk/ui/images/icon_64.png \
             fpk/ui/images/icon_256.png
