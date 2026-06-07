@@ -83,7 +83,7 @@ function BatchTranscodeModal({
   const [selectedPreset, setSelectedPreset] = useState('');
   const [lastOutputDir, setLastOutputDir] = useLocalStorage<string>(
     'handbrake_last_output_dir',
-    '/drive/转码/转码后'
+    '/drive'
   );
 
   const [outputDirectory, setOutputDirectory] = useState(
@@ -354,7 +354,7 @@ function BatchTranscodeModal({
     }
   };
 
-  const ROOT_OUTPUT_PATH = '/drive/转码/转码后';
+  const ROOT_OUTPUT_PATH = '/drive';
   const pathParts = useMemo(
     () => (browsePath || ROOT_OUTPUT_PATH).split('/').filter(Boolean),
     [browsePath]
