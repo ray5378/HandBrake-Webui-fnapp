@@ -89,10 +89,7 @@ jobs:
             fpk/config/resource \
             fpk/wizard/install \
             fpk/wizard/config \
-            fpk/wizard/uninstall \
-            fpk/ui/config \
-            fpk/ui/images/icon_64.png \
-            fpk/ui/images/icon_256.png
+            fpk/wizard/uninstall
 
       - name: Verify fpk contents
         run: |
