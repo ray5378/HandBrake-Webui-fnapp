@@ -60,6 +60,10 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
+      - name: Package app.tgz
+        run: |
+          mkdir -p fpk/app && tar -czf fpk/app.tgz -C fpk/app .
+
       - name: Build fpk
         run: |
           VERSION=$(grep '^version' fpk/manifest | awk -F'=' '{print $2}' | xargs)
@@ -68,6 +72,7 @@ jobs:
           echo "Building ${FPK_NAME}"
           tar -czf "${FPK_NAME}" \
             --transform 's|^fpk/||' \
+            fpk/app.tgz \
             fpk/manifest \
             fpk/ICON.PNG \
             fpk/ICON_256.PNG \
