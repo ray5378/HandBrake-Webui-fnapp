@@ -27,6 +27,8 @@ start_container() {
     -e PORT="${TRIM_SERVICE_PORT:-52389}" \
     -e CONFIG_DIR=/config \
     -e NODE_ENV=production \
+    -e TRIN_DATA_ACCESSIBLE_PATHS="${TRIN_DATA_ACCESSIBLE_PATHS:-}" \
+    -e TRIN_APP_STATUS="${TRIN_APP_STATUS:-}" \
     $dev_params \
     $IMAGE_NAME
 }

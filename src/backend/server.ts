@@ -18,10 +18,15 @@ import systemRoutes from './src/routes/system';
 import { startThumbnailCleanup } from './src/services/thumbnailService';
 import { closeDatabase } from './src/models/database';
 import { killAllJobs } from './src/services/handbrakeService';
+import driveManager from './src/services/driveManager';
 
 const app = express();
 
 config.initialize();
+
+// 初始化驱动管理器：读取 TRIN_DATA_ACCESSIBLE_PATHS 并在 /drive 下创建符号链接
+// 同时启动定时器检测 TRIN_APP_STATUS 变更，实现动态更新
+driveManager.initialize();
 
 const cacheDir = config.cacheDir;
 if (cacheDir) {
@@ -172,6 +177,8 @@ const shutdown = async (signal: string) => {
   } catch (_e2) {
     // ignore
   }
+
+  driveManager.shutdown();
 
   setTimeout(() => process.exit(0), 5000).unref();
 };

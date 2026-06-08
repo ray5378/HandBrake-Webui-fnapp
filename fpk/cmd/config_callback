@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# When accessible directories change, restart the container to remount
-CMD_DIR="$(dirname "$0")"
-"${CMD_DIR}/main" stop
-"${CMD_DIR}/main" start
+# When accessible directories change, update process environment and notify.
+# The application itself will detect the change and update the symlinks.
+# No need to restart container anymore.
+
+# Update environment so any future pickups have the latest values
+export TRIN_DATA_ACCESSIBLE_PATHS="${TRIN_DATA_ACCESSIBLE_PATHS}"
+export TRIN_APP_STATUS="${TRIN_APP_STATUS}"
 
 exit 0
