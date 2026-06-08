@@ -128,9 +128,9 @@ function syncDriveSymlinks(): void {
         }
         continue;
       }
-      // 已存在真实目录，跳过（保护用户数据）
+      // 已存在真实目录（来自 Docker 挂载），无需创建符号链接
       if (stat.isDirectory()) {
-        logger.warn(`Directory already exists at symlink location, skipping: ${symlinkPath}`);
+        logger.info(`Directory already mounted at: ${symlinkPath} (Docker volume mount, skipping symlink)`);
         continue;
       }
       // 已存在文件，跳过
