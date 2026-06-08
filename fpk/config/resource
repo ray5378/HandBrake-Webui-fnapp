@@ -1,4 +1,10 @@
 {
-  "network": true,
-  "devices": ["/dev/dri"]
+  "docker-project": {
+    "projects": [
+      {
+        "name": "handbrake-webui",
+        "path": "docker"
+      }
+    ]
+  }
 }
