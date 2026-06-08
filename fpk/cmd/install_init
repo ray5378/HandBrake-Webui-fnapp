@@ -1,13 +1,4 @@
 #!/bin/bash
 
-IMAGE_NAME="ray5378/handbrake-webui-fnapp:${TRIM_APPVER:-latest}"
-
-if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
-  echo "Pulling Docker image: ${IMAGE_NAME}"
-  if ! docker pull "${IMAGE_NAME}"; then
-    echo "ERROR: Failed to pull image ${IMAGE_NAME}" >&2
-    exit 1
-  fi
-fi
-
+# Docker image will be pulled on first start by main script
 exit 0
