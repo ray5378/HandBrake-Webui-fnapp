@@ -73,36 +73,37 @@ jobs:
 
       - name: Build fpk
         run: |
+          set -e
           FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
           echo "Building ${FPK_NAME}"
-          tar -czf "${FPK_NAME}" \
-            --transform 's|^fpk/||' \
-            fpk/app.tgz \
-            fpk/manifest \
-            fpk/ICON.PNG \
-            fpk/ICON_256.PNG \
-            fpk/cmd/main \
-            fpk/cmd/install_init \
-            fpk/cmd/install_callback \
-            fpk/cmd/uninstall_init \
-            fpk/cmd/uninstall_callback \
-            fpk/cmd/upgrade_init \
-            fpk/cmd/upgrade_callback \
-            fpk/cmd/config_init \
-            fpk/cmd/config_callback \
-            fpk/config/privilege \
-            fpk/config/resource \
-            fpk/wizard/install \
-            fpk/wizard/config \
-            fpk/wizard/uninstall \
-            fpk/wizard/upgrade \
-            fpk/app/docker/docker-compose.yaml \
-            fpk/ui/config \
-            fpk/ui/images/icon_64.png \
-            fpk/ui/images/icon_256.png
+          tar -czf "${FPK_NAME}" -C fpk \
+            app.tgz \
+            manifest \
+            ICON.PNG \
+            ICON_256.PNG \
+            cmd/main \
+            cmd/install_init \
+            cmd/install_callback \
+            cmd/uninstall_init \
+            cmd/uninstall_callback \
+            cmd/upgrade_init \
+            cmd/upgrade_callback \
+            cmd/config_init \
+            cmd/config_callback \
+            config/privilege \
+            config/resource \
+            wizard/install \
+            wizard/config \
+            wizard/uninstall \
+            wizard/upgrade \
+            app/docker/docker-compose.yaml \
+            ui/config \
+            ui/images/icon_64.png \
+            ui/images/icon_256.png
 
       - name: Verify fpk contents
         run: |
+          set -e
           ls -lh App.ThirdParty.HandBrakeWebui-*.fpk
           tar -tzf App.ThirdParty.HandBrakeWebui-*.fpk
 
