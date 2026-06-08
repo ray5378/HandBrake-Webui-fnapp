@@ -3,6 +3,15 @@
 IMAGE_NAME="ray5378/handbrake-webui-fnapp:${TRIM_APPVER:-latest}"
 
 start_container() {
+  # Make sure the image is available locally
+  if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+    echo "Pulling Docker image: ${IMAGE_NAME}"
+    if ! docker pull "${IMAGE_NAME}"; then
+      echo "ERROR: Failed to pull Docker image ${IMAGE_NAME}" >&2
+      return 1
+    fi
+  fi
+
   local vol_config="-v ${TRIM_PKGVAR}/config:/config"
 
   # Mount each accessible path directly at its original path
@@ -18,8 +27,11 @@ start_container() {
   local dev_params=""
   [ -d /dev/dri ] && dev_params="--device /dev/dri:/dev/dri"
 
+  # Remove previous container if exists
   docker rm -f handbrake-webui 2>/dev/null || true
-  docker run -d \
+
+  # Start the container
+  if ! docker run -d \
     --name handbrake-webui \
     --restart unless-stopped \
     --network host \
@@ -30,12 +42,27 @@ start_container() {
     -e TRIN_DATA_ACCESSIBLE_PATHS="${TRIM_DATA_ACCESSIBLE_PATHS:-}" \
     -e TRIN_APP_STATUS="${TRIM_APP_STATUS:-}" \
     $dev_params \
-    $IMAGE_NAME
+    $IMAGE_NAME; then
+    echo "ERROR: Failed to start Docker container" >&2
+    return 1
+  fi
+
+  # Wait a moment for the container to initialize
+  sleep 2
+
+  # Verify the container is still running
+  if ! docker inspect handbrake-webui --format='{{.State.Running}}' 2>/dev/null | grep -q true; then
+    echo "ERROR: Container exited shortly after start. Last logs:" >&2
+    docker logs --tail 20 handbrake-webui 2>&1 >&2 || true
+    return 1
+  fi
+
+  return 0
 }
 
 case $1 in
   start)
-    start_container
+    start_container || exit 1
     ;;
   stop)
     docker stop handbrake-webui 2>/dev/null || true
@@ -43,7 +70,7 @@ case $1 in
     exit 0
     ;;
   status)
-    docker inspect handbrake-webui | grep -q '"Status": "running",' || exit 3
+    docker inspect handbrake-webui --format='{{.State.Running}}' 2>/dev/null | grep -q true || exit 3
     exit 0
     ;;
   *)

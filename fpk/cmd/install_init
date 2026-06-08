@@ -2,12 +2,12 @@
 
 IMAGE_NAME="ray5378/handbrake-webui-fnapp:${TRIM_APPVER:-latest}"
 
-load_docker_image() {
-  docker pull "${IMAGE_NAME}" || {
-    echo "Failed to pull image ${IMAGE_NAME}" >> "${TRIM_TEMP_LOGFILE}"
-    return 1
-  }
-}
+if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+  echo "Pulling Docker image: ${IMAGE_NAME}"
+  if ! docker pull "${IMAGE_NAME}"; then
+    echo "ERROR: Failed to pull image ${IMAGE_NAME}" >&2
+    exit 1
+  fi
+fi
 
-load_docker_image
 exit 0

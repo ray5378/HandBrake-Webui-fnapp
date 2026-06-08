@@ -26,7 +26,11 @@ config.initialize();
 
 // 初始化驱动管理器：读取 TRIN_DATA_ACCESSIBLE_PATHS 并在 /drive 下创建符号链接
 // 同时启动定时器检测 TRIN_APP_STATUS 变更，实现动态更新
-driveManager.initialize();
+try {
+  driveManager.initialize();
+} catch (e: unknown) {
+  console.warn('Failed to initialize drive manager, continuing...', (e as Error).message);
+}
 
 const cacheDir = config.cacheDir;
 if (cacheDir) {

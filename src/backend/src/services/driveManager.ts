@@ -65,6 +65,7 @@ function resolveSymlinkTarget(symlinkPath: string): string | null {
  * - 移除不再需要的旧符号链接
  */
 function syncDriveSymlinks(): void {
+  try {
   const paths = getAccessiblePaths();
 
   if (paths.length === 0) {
@@ -151,6 +152,9 @@ function syncDriveSymlinks(): void {
 
   // 清理不再需要的旧符号链接
   cleanupDriveSymlinks(validPaths);
+  } catch (err) {
+    logger.warn('Error syncing drive symlinks', { error: (err as Error).message });
+  }
 }
 
 // 记录上次已知的 TRIN_APP_STATUS，用于检测变更
@@ -191,17 +195,25 @@ let watchInterval: ReturnType<typeof setInterval> | null = null;
  * 2. 启动定时器检测 TRIN_APP_STATUS 变更
  */
 function initialize(): void {
-  logger.info('Initializing drive manager...');
+  try {
+    logger.info('Initializing drive manager...');
 
-  // 首次同步
-  syncDriveSymlinks();
+    // 首次同步
+    syncDriveSymlinks();
 
-  // 每 5 秒检测一次配置变更
-  watchInterval = setInterval(() => {
-    checkConfigStatus();
-  }, 5000);
+    // 每 5 秒检测一次配置变更
+    watchInterval = setInterval(() => {
+      try {
+        checkConfigStatus();
+      } catch (err) {
+        logger.warn('Error checking config status', { error: (err as Error).message });
+      }
+    }, 5000);
 
-  logger.info('Drive manager initialized, watching for config changes every 5s');
+    logger.info('Drive manager initialized, watching for config changes every 5s');
+  } catch (err) {
+    logger.warn('Failed to initialize drive manager, continuing without drive mapping', { error: (err as Error).message });
+  }
 }
 
 /**

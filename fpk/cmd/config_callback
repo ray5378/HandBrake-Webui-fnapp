@@ -4,6 +4,6 @@
 # The driveManager inside the app will handle symlink creation on startup.
 CMD_DIR="$(dirname "$0")"
 "${CMD_DIR}/main" stop
-"${CMD_DIR}/main" start
+"${CMD_DIR}/main" start || exit 1
 
 exit 0
