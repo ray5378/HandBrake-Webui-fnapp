@@ -67,41 +67,20 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
+      - name: Download fnpack
+        run: |
+          set -e
+          curl -#kL https://static2.fnnas.com/fnpack/fnpack-1.0.4-linux-amd64 -o fnpack
+          chmod +x fnpack
+          ./fnpack --help
+
       - name: Build fpk
         run: |
           set -e
+          ./fnpack build --directory fpk
+          VERSION=$(grep '^version' fpk/manifest | awk -F'=' '{print $2}' | xargs)
           FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
-          echo "Building ${FPK_NAME}"
-
-          # Package app.tgz
-          cd fpk/app && tar -czf ../app.tgz . && cd ../..
-
-          # Build fpk
-          tar -czf "${FPK_NAME}" -C fpk \
-            app.tgz \
-            manifest \
-            ICON.PNG \
-            ICON_256.PNG \
-            cmd/main \
-            cmd/install_init \
-            cmd/install_callback \
-            cmd/uninstall_init \
-            cmd/uninstall_callback \
-            cmd/upgrade_init \
-            cmd/upgrade_callback \
-            cmd/config_init \
-            cmd/config_callback \
-            config/privilege \
-            config/resource \
-            wizard/install \
-            wizard/config \
-            wizard/uninstall \
-            wizard/upgrade \
-            app/docker/docker-compose.yaml \
-            ui/config \
-            ui/images/icon_64.png \
-            ui/images/icon_256.png
-
+          mv App.ThirdParty.HandBrakeWebui.fpk "${FPK_NAME}"
           echo "FPK created:"
           ls -lh "${FPK_NAME}"
 
