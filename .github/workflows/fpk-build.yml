@@ -73,9 +73,16 @@ jobs:
 
       - name: Build fpk
         run: |
-          set -e
+          set -ex
+          echo "Version=${VERSION}"
           FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
           echo "Building ${FPK_NAME}"
+          echo "Files in fpk/:"
+          ls -la fpk/
+          echo "Files in fpk/app/:"
+          ls -laR fpk/app/ || echo "No fpk/app dir"
+          echo "app.tgz exists:"
+          ls -lh fpk/app.tgz || echo "No app.tgz!"
           tar -czf "${FPK_NAME}" -C fpk \
             app.tgz \
             manifest \
@@ -100,11 +107,16 @@ jobs:
             ui/config \
             ui/images/icon_64.png \
             ui/images/icon_256.png
+          echo "FPK created:"
+          ls -lh "${FPK_NAME}"
 
       - name: Verify fpk contents
         run: |
-          set -e
-          ls -lh App.ThirdParty.HandBrakeWebui-*.fpk
+          set -ex
+          echo "Current dir: $(pwd)"
+          echo "Files matching glob:"
+          ls -lh App.ThirdParty.HandBrakeWebui-*.fpk || echo "No files found!"
+          echo "Listing tar contents:"
           tar -tzf App.ThirdParty.HandBrakeWebui-*.fpk
 
       - name: Generate checksum
