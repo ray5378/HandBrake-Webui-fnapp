@@ -67,25 +67,16 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: Package app.tgz
-        run: |
-          echo "Packaging fpk/app contents to fpk/app.tgz..."
-          ls -laR fpk/app/
-          cd fpk/app && tar -czf ../app.tgz .
-          cd .. && ls -lh app.tgz
-
       - name: Build fpk
         run: |
-          set -ex
-          echo "Version=${VERSION}"
+          set -e
           FPK_NAME="App.ThirdParty.HandBrakeWebui-${VERSION}.fpk"
           echo "Building ${FPK_NAME}"
-          echo "Files in fpk/:"
-          ls -la fpk/
-          echo "Files in fpk/app/:"
-          ls -laR fpk/app/ || echo "No fpk/app dir"
-          echo "app.tgz exists:"
-          ls -lh fpk/app.tgz || echo "No app.tgz!"
+
+          # Package app.tgz
+          cd fpk/app && tar -czf ../app.tgz . && cd ../..
+
+          # Build fpk
           tar -czf "${FPK_NAME}" -C fpk \
             app.tgz \
             manifest \
@@ -110,16 +101,14 @@ jobs:
             ui/config \
             ui/images/icon_64.png \
             ui/images/icon_256.png
+
           echo "FPK created:"
           ls -lh "${FPK_NAME}"
 
       - name: Verify fpk contents
         run: |
-          set -ex
-          echo "Current dir: $(pwd)"
-          echo "Files matching glob:"
-          ls -lh App.ThirdParty.HandBrakeWebui-*.fpk || echo "No files found!"
-          echo "Listing tar contents:"
+          set -e
+          ls -lh App.ThirdParty.HandBrakeWebui-*.fpk
           tar -tzf App.ThirdParty.HandBrakeWebui-*.fpk
 
       - name: Generate checksum
